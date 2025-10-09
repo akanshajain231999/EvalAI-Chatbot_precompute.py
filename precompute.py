@@ -93,17 +93,25 @@ if __name__ == "__main__":
         encode_kwargs={"normalize_embeddings": True},
     )
 
+    # --- Create FAISS index ---
     vector_db = FAISS.from_documents(documents, embedding_model)
-    os.makedirs("db", exist_ok=True)
-    vector_db.save_local("db")   # saves index + index_to_docstore.json
-    
-    # Ensure all generated files are inside db/
-    # (some LangChain versions save in current directory instead)
-    if os.path.exists("index.faiss"):
-        os.rename("index.faiss", os.path.join("db", "index.faiss"))
-    if os.path.exists("index.pkl"):
-        os.rename("index.pkl", os.path.join("db", "index.pkl"))
-    if os.path.exists("index_to_docstore.json"):
-        os.rename("index_to_docstore.json", os.path.join("db", "index_to_docstore.json"))
 
-    print("✅ Saved FAISS index and metadata inside ./db")
+    # --- Create folder explicitly ---
+    save_dir = os.path.join(os.getcwd(), "db")
+    os.makedirs(save_dir, exist_ok=True)
+
+    # --- Save index to that folder ---
+    vector_db.save_local(save_dir)
+
+    # --- Move files manually if saved in wrong location ---
+    for fname in ["index.faiss", "index.pkl", "index_to_docstore.json"]:
+        src = os.path.join(os.getcwd(), fname)
+        dst = os.path.join(save_dir, fname)
+        if os.path.exists(src) and not os.path.exists(dst):
+            os.rename(src, dst)
+            print(f"Moved {fname} → db/{fname}")
+
+    # --- Print verification summary ---
+    print("\n✅ Saved FAISS index and metadata inside ./db/")
+    for f in os.listdir(save_dir):
+        print(" -", f)

@@ -39,7 +39,7 @@ jobs:
           import os
 
           repo_id = "akanshajain231999/EvalAI-Chatbot"  # 🧠 replace with your Space repo ID
-          path_to_file = "data/database.faiss"   # 🧠 replace with the file your script generates
+          path_to_file = "./db/"   # 🧠 replace with the file your script generates
 
           api = HfApi(token=os.environ["HF_TOKEN"])
           upload_file(

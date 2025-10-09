@@ -1,0 +1,52 @@
+name: Run precompute and push to Hugging Face
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # every day at 6:00 AM UTC
+  workflow_dispatch:       # allow manual trigger
+  push:
+    branches:
+      - main
+
+jobs:
+  run-precompute:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install huggingface_hub  # to push files to Hugging Face
+
+      - name: Run precompute.py
+        run: |
+          python precompute.py
+
+      - name: Push generated database to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python - <<'EOF'
+          from huggingface_hub import HfApi, upload_file
+          import os
+
+          repo_id = "akanshajain231999/EvalAI-Chatbot"  # 🧠 replace with your Space repo ID
+          path_to_file = "data/database.faiss"   # 🧠 replace with the file your script generates
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          upload_file(
+              path_or_fileobj=path_to_file,
+              path_in_repo=path_to_file,
+              repo_id=repo_id,
+              repo_type="space"
+          )
+          print(f"✅ Uploaded {path_to_file} to Hugging Face Space: {repo_id}")
+          EOF

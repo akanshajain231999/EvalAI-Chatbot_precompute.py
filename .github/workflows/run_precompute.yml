@@ -35,18 +35,17 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           python - <<'EOF'
-          from huggingface_hub import HfApi, upload_file
+          from huggingface_hub import HfApi, upload_folder
           import os
 
-          repo_id = "akanshajain231999/EvalAI-Chatbot"  # 🧠 replace with your Space repo ID
-          path_to_file = "./db/"   # 🧠 replace with the file your script generates
+          repo_id = "akanshajain231999/EvalAI-Chatbot"  # 🧠 Your actual Space ID
+          folder_path = "db"  # Folder created by precompute.py
 
           api = HfApi(token=os.environ["HF_TOKEN"])
-          upload_file(
-              path_or_fileobj=path_to_file,
-              path_in_repo=path_to_file,
+          upload_folder(
+              folder_path=folder_path,
               repo_id=repo_id,
               repo_type="space"
           )
-          print(f"✅ Uploaded {path_to_file} to Hugging Face Space: {repo_id}")
+          print(f"✅ Uploaded folder '{folder_path}' to Hugging Face Space: {repo_id}")
           EOF

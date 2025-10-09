@@ -2,8 +2,8 @@ name: Run precompute and push to Hugging Face
 
 on:
   schedule:
-    - cron: '0 6 * * *'   # every day at 6:00 AM UTC
-  workflow_dispatch:       # allow manual trigger
+    - cron: '0 6 * * *'  # every day at 6:00 AM UTC
+  workflow_dispatch:      # manual trigger
   push:
     branches:
       - main
@@ -13,39 +13,67 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # --- Step 1: Checkout code ---
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # --- Step 2: Setup Python environment ---
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
+      # --- Step 3: Install dependencies ---
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install huggingface_hub  # to push files to Hugging Face
+          pip install huggingface_hub
 
+      # --- Step 4: Run the precompute script ---
       - name: Run precompute.py
         run: |
+          echo "🚀 Running precompute.py to generate FAISS index..."
           python precompute.py
+          echo "✅ Finished generating FAISS index. Contents of ./db:"
+          ls -lh db || echo "⚠️ db folder missing!"
 
-      - name: Push generated database to Hugging Face
+      # --- Step 5: Push to Hugging Face Space ---
+      - name: Push updated FAISS index to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           python - <<'EOF'
-          from huggingface_hub import HfApi, upload_folder
           import os
+          from huggingface_hub import HfApi, upload_folder
 
-          repo_id = "akanshajain231999/EvalAI-Chatbot"  # 🧠 Your actual Space ID
-          folder_path = "db"  # Folder created by precompute.py
+          repo_id = "akanshajain231999/EvalAI-Chatbot"
+          folder_path = "db"
+          token = os.environ["HF_TOKEN"]
 
-          api = HfApi(token=os.environ["HF_TOKEN"])
+          api = HfApi(token=token)
+
+          print(f"🧹 Deleting old 'db/' folder from Space repo: {repo_id}")
+          try:
+              api.delete_folder(repo_id=repo_id, path_in_repo="db", repo_type="space")
+              print("✅ Old folder deleted.")
+          except Exception as e:
+              print("ℹ️ No existing folder found or already clean:", e)
+
+          print(f"⬆️ Uploading new FAISS database from {folder_path}/ ...")
           upload_folder(
               folder_path=folder_path,
               repo_id=repo_id,
-              repo_type="space"
+              repo_type="space",
+              commit_message="🔄 Auto-update FAISS database via GitHub Actions",
+              allow_patterns="*",
           )
-          print(f"✅ Uploaded folder '{folder_path}' to Hugging Face Space: {repo_id}")
+          print("✅ Upload complete!")
+
+          # Verify files now exist in the repo
+          files = api.list_repo_files(repo_id=repo_id, repo_type="space")
+          print("📂 Files now in Space repo under /db:")
+          for f in files:
+              if f.startswith("db/"):
+                  print(" -", f)
           EOF

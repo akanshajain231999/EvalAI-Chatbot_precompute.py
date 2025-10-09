@@ -96,4 +96,10 @@ if __name__ == "__main__":
     vector_db = FAISS.from_documents(documents, embedding_model)
     os.makedirs("db", exist_ok=True)
     vector_db.save_local("db")   # saves index + index_to_docstore.json
-    print("Saved FAISS index to ./db")
+    
+    # Ensure all files end up in db/
+    for fname in ["index.faiss", "index.pkl", "index_to_docstore.json"]:
+        if os.path.exists(fname):
+            os.rename(fname, os.path.join("db", fname))
+
+    print("✅ Saved FAISS index to ./db/")

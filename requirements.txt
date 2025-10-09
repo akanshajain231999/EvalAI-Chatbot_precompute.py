@@ -1,0 +1,12 @@
+gradio>=3.30
+requests
+beautifulsoup4
+langchain>=0.0.280
+langchain-community
+langchain-openai
+faiss-cpu
+openai
+huggingface_hub
+pydantic
+tqdm
+sentence-transformers

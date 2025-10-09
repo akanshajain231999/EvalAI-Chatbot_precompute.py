@@ -97,9 +97,13 @@ if __name__ == "__main__":
     os.makedirs("db", exist_ok=True)
     vector_db.save_local("db")   # saves index + index_to_docstore.json
     
-    # Ensure all files end up in db/
-    for fname in ["index.faiss", "index.pkl", "index_to_docstore.json"]:
-        if os.path.exists(fname):
-            os.rename(fname, os.path.join("db", fname))
+    # Ensure all generated files are inside db/
+    # (some LangChain versions save in current directory instead)
+    if os.path.exists("index.faiss"):
+        os.rename("index.faiss", os.path.join("db", "index.faiss"))
+    if os.path.exists("index.pkl"):
+        os.rename("index.pkl", os.path.join("db", "index.pkl"))
+    if os.path.exists("index_to_docstore.json"):
+        os.rename("index_to_docstore.json", os.path.join("db", "index_to_docstore.json"))
 
-    print("✅ Saved FAISS index to ./db/")
+    print("✅ Saved FAISS index and metadata inside ./db")

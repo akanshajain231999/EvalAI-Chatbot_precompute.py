@@ -1,7 +1,7 @@
 gradio>=3.30
 requests
 beautifulsoup4
-langchain>=0.0.280
+langchain==0.0.350
 langchain-community
 langchain-openai
 faiss-cpu
